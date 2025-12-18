@@ -173,7 +173,6 @@ variable "artifactory_host_path" {
   default     = "/tmp/artifactory-data"
 }
 
-
 # SonarQube Configuration
 variable "sonarqube_version" {
   description = "SonarQube version"
@@ -204,3 +203,29 @@ variable "sonarqube_conf_host_path" {
   type        = string
   default     = "/tmp/sonarqube-conf"
 }
+
+# Zed Attack Proxy  Configuration
+variable "zap_version" {
+  description = "ZAP version"
+  type        = string
+  default     = "latest"
+}
+
+variable "zap_http_port" {
+  description = "ZAP HTTP port"
+  type        = number
+  default     = 8084 
+}
+
+variable "zap_websocket_port" {
+  description = "ZAP Websocket port"
+  type        = number
+  default     = 8090 
+}
+
+variable "zap_work_host_path" {
+  description = "ZAP Work volume local host path"
+  type        = string
+  default     = "/tmp/zap-work"
+}
+

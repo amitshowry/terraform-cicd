@@ -28,6 +28,11 @@ output "sonarqube_url" {
   value       = "http://${var.host_ip}:${var.sonarqube_http_port}"
 }
 
+output "zap_url" {
+  description = "ZAP web interface URL"
+  value       = "http://${var.host_ip}:${var.zap_http_port}"
+}
+
 output "container_info" {
   description = "Container information"
   value = {
@@ -59,6 +64,11 @@ output "container_info" {
     sonarqube = {
       id     = docker_container.sonarqube.id
       name   = docker_container.sonarqube.name
+      status = "running"
+    }
+    zap = {
+      id     = docker_container.zap.id
+      name   = docker_container.zap.name
       status = "running"
     }
   }

@@ -400,3 +400,53 @@ resource "docker_container" "sonarqube" {
   }
 
 }
+
+###########################################################
+# Zed Attack Proxy
+###########################################################
+resource "docker_image" "zap" {
+  name         = "zaproxy/zap-stable:${var.zap_version}"
+  keep_locally = true
+}
+
+resource "docker_container" "zap" {
+  image = docker_image.zap.image_id
+  name  = "zap"
+
+  restart = "unless-stopped"
+
+  networks_advanced {
+    name = docker_network.devops_network.name
+  }
+
+  ports {
+    internal = var.zap_http_port 
+    external = var.zap_http_port
+  }
+
+  ports {
+    internal = 8090
+    external = var.zap_websocket_port
+  }
+
+  env = [
+    "ZAP_PORT=${var.zap_http_port}"
+  ]
+
+  command = [
+    "zap.sh", "-daemon", "-host", "0.0.0.0", "-port", "${var.zap_http_port}", "-config", "api.addrs.addr.name=.*", "-config", "api.addrs.addr.regex=true"
+  ]
+
+  volumes {
+    host_path      = var.zap_work_host_path
+    container_path = "/zap/wrk"
+  }
+
+  healthcheck {
+    test     = ["CMD", "curl", "-f", "http://localhost:${var.zap_http_port}"]
+    interval = "30s"
+    timeout  = "10s"
+    retries  = 3
+  }
+
+}
