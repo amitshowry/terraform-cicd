@@ -23,6 +23,11 @@ output "artifactory_url" {
   value       = "http://${var.host_ip}:${var.artifactory_ui_port}"
 }
 
+output "sonarqube_url" {
+  description = "SonarQube web interface URL"
+  value       = "http://${var.host_ip}:${var.sonarqube_http_port}"
+}
+
 output "container_info" {
   description = "Container information"
   value = {
@@ -49,6 +54,11 @@ output "container_info" {
     artifactory = {
       id     = docker_container.artifactory.id
       name   = docker_container.artifactory.name
+      status = "running"
+    }
+    sonarqube = {
+      id     = docker_container.sonarqube.id
+      name   = docker_container.sonarqube.name
       status = "running"
     }
   }

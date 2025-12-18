@@ -168,7 +168,39 @@ variable "artifactory_ui_port" {
 }
 
 variable "artifactory_host_path" {
-  description = "Gitea data volume local host path"
+  description = "Artifactory data volume local host path"
   type        = string
   default     = "/tmp/artifactory-data"
+}
+
+
+# SonarQube Configuration
+variable "sonarqube_version" {
+  description = "SonarQube version"
+  type        = string
+  default     = "latest"
+}
+
+variable "sonarqube_http_port" {
+  description = "SonarQube HTTP port"
+  type        = number
+  default     = 9000
+}
+
+variable "sonarqube_data_host_path" {
+  description = "SonarQube data volume local host path"
+  type        = string
+  default     = "/tmp/sonarqube-data"
+}
+
+variable "sonarqube_extensions_host_path" {
+  description = "SonarQube Extensions volume local host path"
+  type        = string
+  default     = "/tmp/sonarqube-ext"
+}
+
+variable "sonarqube_conf_host_path" {
+  description = "SonarQube Conf volume local host path"
+  type        = string
+  default     = "/tmp/sonarqube-conf"
 }

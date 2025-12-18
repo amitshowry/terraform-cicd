@@ -348,3 +348,55 @@ resource "docker_container" "artifactory" {
     postgresql_database.artifactory
   ]
 }
+
+
+###########################################################
+# SonarQube Community Build 
+###########################################################
+resource "docker_image" "sonarqube" {
+  name         = "sonarqube:${var.sonarqube_version}"
+  keep_locally = true
+}
+
+resource "docker_container" "sonarqube" {
+  image = docker_image.sonarqube.image_id
+  name  = "sonarqube"
+
+  restart = "unless-stopped"
+
+  networks_advanced {
+    name = docker_network.devops_network.name
+  }
+
+  ports {
+    internal = 9000
+    external = var.sonarqube_http_port
+  }
+
+  env = [
+    "SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true"
+  ]
+
+  volumes {
+    host_path      = var.sonarqube_data_host_path
+    container_path = "/opt/sonarqube/data"
+  }
+
+  volumes {
+    host_path      = var.sonarqube_extensions_host_path
+    container_path = "/opt/sonarqube/extensions"
+  }
+
+  volumes {
+    host_path      = var.sonarqube_conf_host_path
+    container_path = "/opt/sonarqube/conf"
+  }
+
+  healthcheck {
+    test     = ["CMD", "curl", "-f", "http://localhost:9000/api/system/status"]
+    interval = "30s"
+    timeout  = "10s"
+    retries  = 3
+  }
+
+}
