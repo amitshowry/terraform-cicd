@@ -36,9 +36,9 @@ output "zap_url" {
 output "container_info" {
   description = "Container information"
   value = {
-    postgres = {
-      id     = docker_container.postgres.id
-      name   = docker_container.postgres.name
+    postgres-gitea = {
+      id     = docker_container.postgres_gitea.id
+      name   = docker_container.postgres_gitea.name
       status = "running"
     }
     gitea = {
@@ -54,6 +54,11 @@ output "container_info" {
     jenkins_agent = {
       id     = docker_container.jenkins_agent.id
       name   = docker_container.jenkins_agent.name
+      status = "running"
+    }
+    postgres-artifactory = {
+      id     = docker_container.postgres_artifactory.id
+      name   = docker_container.postgres_artifactory.name
       status = "running"
     }
     artifactory = {

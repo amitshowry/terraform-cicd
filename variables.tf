@@ -28,43 +28,43 @@ variable "host_ip" {
   default     = "localhost"
 }
 
-# PostgreSQL Configuration
-variable "postgres_version" {
-  description = "PostgreSQL version"
+# Gitea PostgreSQL Configuration
+variable "postgres_gitea_version" {
+  description = "Gitea PostgreSQL version"
   type        = string
   default     = "15-alpine"
 }
 
-variable "postgres_user" {
-  description = "PostgreSQL user"
+variable "postgres_gitea_db" {
+  description = "Gitea PostgreSQL database name"
+  type        = string
+  default     = "gitea"
+}
+
+variable "postgres_gitea_db_user" {
+  description = "Gitea PostgreSQL user"
   type        = string
   default     = "gitea"
   sensitive   = true
 }
 
-variable "postgres_password" {
-  description = "PostgreSQL password"
+variable "postgres_gitea_db_password" {
+  description = "Gitea PostgreSQL password"
   type        = string
-  default     = "gitea_secure_password"
+  default     = "password"
   sensitive   = true
 }
 
-variable "postgres_host_path" {
-  description = "Postgres data volume local host path"
+variable "postgres_gitea_host_path" {
+  description = "Git PostgreSQL data volume local host path"
   type        = string
-  default     = "/tmp/postgres-data"
+  default     = "/tmp/postgres-gitea-data"
 }
 
-variable "postgres_tcp_port" {
-  description = "Postgres TCP port"
+variable "postgres_gitea_tcp_port" {
+  description = "Gitea PostgreSQL TCP port"
   type        = number
   default     = 5432
-}
-
-variable "gitea_db_name" {
-  description = "Gitea database name"
-  type        = string
-  default     = "gitea"
 }
 
 # Gitea Configuration
@@ -141,14 +141,46 @@ variable "jenkins_agent_host_path" {
   default     = "/tmp/jenkins-agent-data"
 }
 
-# Artifactory Configuration
-variable "artifactory_db_name" {
-  description = "Artifactory DB details"
+# Artifactory PostgreSQL Configuration
+variable "postgres_artifactory_version" {
+  description = "Artifactory PostgreSQL version"
+  type        = string
+  default     = "15-alpine"
+}
+
+variable "postgres_artifactory_db" {
+  description = "Artifactory PostgreSQL database name"
   type        = string
   default     = "artifactory"
 }
 
+variable "postgres_artifactory_db_user" {
+  description = "Artifactory PostgreSQL user"
+  type        = string
+  default     = "artifactory"
+  sensitive   = true
+}
 
+variable "postgres_artifactory_db_password" {
+  description = "Artifactory PostgreSQL password"
+  type        = string
+  default     = "password"
+  sensitive   = true
+}
+
+variable "postgres_artifactory_host_path" {
+  description = "Artifactory PostgreSQL data volume local host path"
+  type        = string
+  default     = "/tmp/postgres-artifactory-data"
+}
+
+variable "postgres_artifactory_tcp_port" {
+  description = "Artifactory PostgreSQL TCP port"
+  type        = number
+  default     = 5432
+}
+
+# Artifactory Configuration
 variable "artifactory_version" {
   description = "Artifactory version"
   type        = string

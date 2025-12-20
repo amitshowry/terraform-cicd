@@ -6,10 +6,6 @@ terraform {
       source  = "kreuzwerker/docker"
       version = "~> 3.0"
     }
-    postgresql = {
-      source  = "cyrilgdn/postgresql"
-      version = "~> 1.25"
-    }
   }
 }
 
@@ -34,18 +30,18 @@ resource "docker_network" "devops_network" {
 ###########################################################
 # PostgreSQL for Gitea
 ###########################################################
-resource "docker_image" "postgres" {
-  name         = "postgres:${var.postgres_version}"
+resource "docker_image" "postgres_gitea" {
+  name         = "postgres:${var.postgres_gitea_version}"
   keep_locally = true
 }
 
-resource "docker_volume" "postgres_data" {
-  name = "postgres_data"
-}
+#resource "docker_volume" "postgres_gitea_data" {
+#  name = "postgres_gitea_data"
+#}
 
-resource "docker_container" "postgres" {
-  name  = "postgres"
-  image = docker_image.postgres.image_id
+resource "docker_container" "postgres_gitea" {
+  name  = "postgres-gitea"
+  image = docker_image.postgres_gitea.image_id
   
   restart = "unless-stopped"
   
@@ -55,26 +51,40 @@ resource "docker_container" "postgres" {
 
   ports {
     internal = 5432
-    external = var.postgres_tcp_port
+    external = var.postgres_gitea_tcp_port
   }
   
   env = [
-    "POSTGRES_USER=${var.postgres_user}",
-    "POSTGRES_PASSWORD=${var.postgres_password}",
-    "POSTGRES_DB=${var.gitea_db_name}"
+    "POSTGRES_DB=${var.postgres_gitea_db}",
+    "POSTGRES_USER=${var.postgres_gitea_db_user}",
+    "POSTGRES_PASSWORD=${var.postgres_gitea_db_password}"
   ]
   
   volumes {
-    #volume_name    = docker_volume.postgres_data.name
-    host_path = var.postgres_host_path
+    #volume_name    = docker_volume.postgres_gitea_data.name
+    host_path = var.postgres_gitea_host_path
     container_path = "/var/lib/postgresql/data"
   }
-  
+
   healthcheck {
-    test     = ["CMD-SHELL", "pg_isready -U ${var.postgres_user}"]
+    test     = ["CMD-SHELL", "pg_isready -U ${var.postgres_gitea_db_user}"]
     interval = "10s"
     timeout  = "5s"
     retries  = 5
+  }
+}
+
+resource "null_resource" "wait_for_healthy_postgres_gitea" {
+  depends_on = [docker_container.postgres_gitea]
+
+  provisioner "local-exec" {
+    command = <<EOT
+      until [ "$(docker inspect --format='{{.State.Health.Status}}' ${docker_container.postgres_gitea.id})" = "healthy" ]; do
+        echo "Waiting for container to be healthy..."
+        sleep 5
+      done
+      echo "Container is healthy!"
+    EOT
   }
 }
 
@@ -96,7 +106,7 @@ resource "docker_container" "gitea" {
   
   restart = "unless-stopped"
   
-  depends_on = [docker_container.postgres]
+  depends_on = [null_resource.wait_for_healthy_postgres_gitea]
   
   networks_advanced {
     name = docker_network.devops_network.name
@@ -116,10 +126,10 @@ resource "docker_container" "gitea" {
     "USER_UID=1000",
     "USER_GID=1000",
     "GITEA__database__DB_TYPE=postgres",
-    "GITEA__database__HOST=postgres:5432",
-    "GITEA__database__NAME=${var.gitea_db_name}",
-    "GITEA__database__USER=${var.postgres_user}",
-    "GITEA__database__PASSWD=${var.postgres_password}",
+    "GITEA__database__HOST=${docker_container.postgres_gitea.name}:5432",
+    "GITEA__database__NAME=${var.postgres_gitea_db}",
+    "GITEA__database__USER=${var.postgres_gitea_db_user}",
+    "GITEA__database__PASSWD=${var.postgres_gitea_db_password}",
     "GITEA__server__ROOT_URL=http://${var.host_ip}:${var.gitea_http_port}/",
     "GITEA__server__SSH_DOMAIN=${var.host_ip}",
     "GITEA__server__SSH_PORT=${var.gitea_ssh_port}",
@@ -248,25 +258,59 @@ resource "docker_container" "jenkins_agent" {
   }
 }
 
-
 ###########################################################
-# JFrog Artifactory OSS
+# PostgreSQL for Artifactory
 ###########################################################
-provider "postgresql" {
-  host     = "localhost"
-  port     = 5432
-  username = "${var.postgres_user}"
-  password = "${var.postgres_password}"
-  database = "postgres"
-  sslmode  = "disable" # Use "require" for SSL
+resource "docker_image" "postgres_artifactory" {
+  name         = "postgres:${var.postgres_gitea_version}"
+  keep_locally = true
 }
 
-resource "null_resource" "wait_for_healthy_postgres" {
-  depends_on = [docker_container.postgres]
+#resource "docker_volume" "postgres_artifactory_data" {
+#  name = "postgres_artifactory_data"
+#}
+
+resource "docker_container" "postgres_artifactory" {
+  name  = "postgres-artifactory"
+  image = docker_image.postgres_artifactory.image_id
+
+  restart = "unless-stopped"
+
+  networks_advanced {
+    name = docker_network.devops_network.name
+  }
+
+  ports {
+    internal = 5432
+    external = var.postgres_artifactory_tcp_port
+  }
+
+  env = [
+    "POSTGRES_DB=${var.postgres_artifactory_db}",
+    "POSTGRES_USER=${var.postgres_artifactory_db_user}",
+    "POSTGRES_PASSWORD=${var.postgres_artifactory_db_password}"
+  ]
+
+  volumes {
+    #volume_name    = docker_volume.postgres_artifactory_data.name
+    host_path = var.postgres_artifactory_host_path
+    container_path = "/var/lib/postgresql/data"
+  }
+
+  healthcheck {
+    test     = ["CMD-SHELL", "pg_isready -U ${var.postgres_artifactory_db_user}"]
+    interval = "10s"
+    timeout  = "5s"
+    retries  = 5
+  }
+}
+
+resource "null_resource" "wait_for_healthy_postgres_artifactory" {
+  depends_on = [docker_container.postgres_artifactory]
 
   provisioner "local-exec" {
     command = <<EOT
-      until [ "$(docker inspect --format='{{.State.Health.Status}}' ${docker_container.postgres.id})" = "healthy" ]; do
+      until [ "$(docker inspect --format='{{.State.Health.Status}}' ${docker_container.postgres_artifactory.id})" = "healthy" ]; do
         echo "Waiting for container to be healthy..."
         sleep 5
       done
@@ -275,23 +319,9 @@ resource "null_resource" "wait_for_healthy_postgres" {
   }
 }
 
-data "postgresql_schemas" "artifactory_db" {
-  database = "${var.artifactory_db_name}"
-  depends_on = [null_resource.wait_for_healthy_postgres]
-}
-
-resource "postgresql_database" "artifactory" {
-  name = "${var.artifactory_db_name}"
-
-  depends_on = [null_resource.wait_for_healthy_postgres]
-
-  count = data.postgresql_schemas.artifactory_db.schemas == "" ? 1 : 0
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
-
+###########################################################
+# JFrog Artifactory OSS
+###########################################################
 resource "docker_image" "artifactory" {
   name         = "releases-docker.jfrog.io/jfrog/artifactory-oss:${var.artifactory_version}"
   keep_locally = true
@@ -306,7 +336,9 @@ resource "docker_container" "artifactory" {
   image = docker_image.artifactory.image_id
   
   restart = "unless-stopped"
-  
+ 
+  depends_on = [null_resource.wait_for_healthy_postgres_artifactory]
+
   networks_advanced {
     name = docker_network.devops_network.name
   }
@@ -324,9 +356,9 @@ resource "docker_container" "artifactory" {
   env = [
       "JF_SHARED_DATABASE_TYPE=postgresql",
       "JF_SHARED_DATABASE_DRIVER=org.postgresql.Driver",
-      "JF_SHARED_DATABASE_URL=jdbc:postgresql://postgres:5432/${var.artifactory_db_name}",
-      "JF_SHARED_DATABASE_USERNAME=${var.postgres_user}",
-      "JF_SHARED_DATABASE_PASSWORD=${var.postgres_password}"
+      "JF_SHARED_DATABASE_URL=jdbc:postgresql://${docker_container.postgres_artifactory.name}:5432/${var.postgres_artifactory_db}",
+      "JF_SHARED_DATABASE_USERNAME=${var.postgres_artifactory_db_user}",
+      "JF_SHARED_DATABASE_PASSWORD=${var.postgres_artifactory_db_password}"
 #      "JF_ROUTER_ENTRYPOINTS_EXTERNALPORT=${var.artifactory_http_port}"
   ]
   
@@ -343,10 +375,6 @@ resource "docker_container" "artifactory" {
     retries  = 5
     start_period = "120s"
   }
-  
-  depends_on = [
-    postgresql_database.artifactory
-  ]
 }
 
 
