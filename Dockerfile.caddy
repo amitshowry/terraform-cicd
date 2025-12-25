@@ -1,0 +1,4 @@
+FROM caddy:2.11-alpine
+
+# Copy your Caddyfile into the standard location
+COPY Caddyfile /etc/caddy/Caddyfile

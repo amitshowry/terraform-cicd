@@ -132,13 +132,26 @@ variable "jenkins_host_path" {
 variable "jenkins_agent_version" {
   description = "Jenkins agent version"
   type        = string
-  default     = "latest-jdk17"
+  default     = "latest"
 }
 
 variable "jenkins_agent_host_path" {
   description = "Jenkins agent data volume local host path"
   type        = string
   default     = "/tmp/jenkins-agent-data"
+}
+
+variable "jenkins_agent_name" {
+  description = "Jenkins agent name you given at jenkins"
+  type        = string
+  default     = "agent"
+}
+
+variable "jenkins_agent_secret" {
+  description = "Jenkins agent secret fetch after jenkins startsup"
+  type        = string
+  default     = "some-random-secret"
+  sensitive   = true
 }
 
 # Artifactory PostgreSQL Configuration
@@ -261,3 +274,8 @@ variable "zap_work_host_path" {
   default     = "/tmp/zap-work"
 }
 
+variable "caddy_http_port" {
+  description = "Caddy HTTP port"
+  type        = number
+  default     = 80
+}

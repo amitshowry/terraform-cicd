@@ -130,7 +130,7 @@ resource "docker_container" "gitea" {
     "GITEA__database__NAME=${var.postgres_gitea_db}",
     "GITEA__database__USER=${var.postgres_gitea_db_user}",
     "GITEA__database__PASSWD=${var.postgres_gitea_db_password}",
-    "GITEA__server__ROOT_URL=http://${var.host_ip}:${var.gitea_http_port}/",
+    "GITEA__server__ROOT_URL=http://${var.host_ip}/gitea",
     "GITEA__server__SSH_DOMAIN=${var.host_ip}",
     "GITEA__server__SSH_PORT=${var.gitea_ssh_port}",
     "GITEA__server__DISABLE_SSH=false",
@@ -157,7 +157,7 @@ resource "docker_container" "gitea" {
   }
 
   healthcheck {
-    test     = ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]
+    test     = ["CMD-SHELL", "curl -f http://${var.host_ip}:${var.gitea_http_port} || exit 1"]
     interval = "30s"
     timeout  = "10s"
     retries  = 5
@@ -217,7 +217,7 @@ resource "docker_container" "jenkins" {
   }
   
   healthcheck {
-    test     = ["CMD-SHELL", "curl -f http://localhost:8080/jenkins/login || exit 1"]
+    test     = ["CMD-SHELL", "curl -f http://${var.host_ip}:${var.jenkins_http_port}/jenkins || exit 1"]
     interval = "30s"
     timeout  = "10s"
     retries  = 5
@@ -235,6 +235,8 @@ resource "docker_container" "jenkins_agent" {
   
   restart = "unless-stopped"
 
+  depends_on = [docker_container.jenkins]
+ 
   user = var.jenkins_user_id
 
   networks_advanced {
@@ -242,10 +244,11 @@ resource "docker_container" "jenkins_agent" {
   }
 
   env = [
-    "JENKINS_URL=http://jenkins:8080/jenkins",
-    "JENKINS_AGENT_NAME=agent1",
-    "JENKINS_SECRET=ad95095a8aaed7ccbda72451c0fbbb9e010d6d1c9c0d011b71b4521254171802",
-    "JENKINS_AGENT_WORKDIR=/var/jenkins"
+    "JENKINS_URL=http://${docker_container.jenkins.name}:${var.jenkins_http_port}/jenkins",
+    "JENKINS_AGENT_WORKDIR=/var/jenkins",
+    "JENKINS_AGENT_NAME=${var.jenkins_agent_name}",
+    "JENKINS_SECRET=${var.jenkins_agent_secret}",
+    "JENKINS_WEB_SOCKET=true"
   ]
 
   networks_advanced {
@@ -255,6 +258,13 @@ resource "docker_container" "jenkins_agent" {
   volumes {
     host_path = var.jenkins_agent_host_path
     container_path = "/var/jenkins"
+  }
+
+  healthcheck {
+    test     = ["CMD-SHELL", "grep agent.jar /proc/1/cmdline || exit 1"]
+    interval = "30s"
+    timeout  = "10s"
+    retries  = 5
   }
 }
 
@@ -369,7 +379,7 @@ resource "docker_container" "artifactory" {
   }
   
   healthcheck {
-    test     = ["CMD-SHELL", "curl -f http://localhost:8082/router/api/v1/system/health || exit 1"]
+    test     = ["CMD-SHELL", "curl -f http://${var.host_ip}:${var.artifactory_ui_port}/router/api/v1/system/health || exit 1"]
     interval = "30s"
     timeout  = "10s"
     retries  = 5
@@ -421,7 +431,7 @@ resource "docker_container" "sonarqube" {
   }
 
   healthcheck {
-    test     = ["CMD", "curl", "-f", "http://localhost:9000/api/system/status"]
+    test     = ["CMD-SHELL", "curl -f http://${var.host_ip}:${var.sonarqube_http_port}/api/system/status || exit 1"]
     interval = "30s"
     timeout  = "10s"
     retries  = 3
@@ -471,10 +481,69 @@ resource "docker_container" "zap" {
   }
 
   healthcheck {
-    test     = ["CMD", "curl", "-f", "http://localhost:${var.zap_http_port}"]
+    test     = ["CMD-SHELL", "curl -f http://${var.host_ip}:${var.zap_http_port} || exit 1"]
     interval = "30s"
     timeout  = "10s"
     retries  = 3
   }
+}
 
+###########################################################
+# Caddy Proxy
+###########################################################
+locals {
+  caddyfile_path = abspath("${path.module}/Caddyfile")
+  caddyfile_hash = filesha256(local.caddyfile_path)
+}
+
+resource "docker_image" "caddy" {
+  name = "caddy:local"
+
+  build {
+    context    = path.module
+    dockerfile = "${path.module}/Dockerfile.caddy"
+  }
+
+  # Force rebuild when Caddyfile content changes
+  lifecycle {
+    replace_triggered_by = [
+      terraform_data.caddyfile_change
+    ]
+  }
+}
+
+resource "terraform_data" "caddyfile_change" {
+  triggers_replace = {
+    caddyfile_hash = local.caddyfile_hash
+  }
+}
+
+resource "docker_container" "caddy" {
+  image = docker_image.caddy.image_id
+  name  = "caddy"
+
+  restart = "unless-stopped"
+
+  networks_advanced {
+    name = docker_network.devops_network.name
+  }
+
+  depends_on = [
+    docker_container.gitea,
+    docker_container.jenkins
+  ]
+
+  ports {
+    internal = 80
+    external = var.caddy_http_port
+    protocol = "tcp"
+  }
+
+  healthcheck {
+    test     = ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://${var.host_ip}:${var.caddy_http_port}/"]
+    interval = "30s"
+    timeout  = "10s"
+    retries  = 5
+    start_period = "30s"
+  }
 }

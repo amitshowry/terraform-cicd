@@ -33,6 +33,11 @@ output "zap_url" {
   value       = "http://${var.host_ip}:${var.zap_http_port}"
 }
 
+output "caddy_url" {
+  description = "Caddy reverse proxy URL"
+  value       = "http://${var.host_ip}:${var.caddy_http_port}"
+}
+
 output "container_info" {
   description = "Container information"
   value = {
@@ -74,6 +79,11 @@ output "container_info" {
     zap = {
       id     = docker_container.zap.id
       name   = docker_container.zap.name
+      status = "running"
+    }
+    caddy = {
+      id     = docker_container.caddy.id
+      name   = docker_container.caddy.name
       status = "running"
     }
   }
