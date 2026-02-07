@@ -69,6 +69,13 @@ resource "docker_container" "jenkins_agent" {
   
   restart = "unless-stopped"
 
+  log_driver = "fluentd"
+  log_opts = {
+    "fluentd-address" = "localhost:24224"
+    "fluentd-async"   = "true"
+    "tag"             = "docker.jenkins-agent"
+  }
+
   depends_on = [docker_container.jenkins]
  
   user = var.user_id

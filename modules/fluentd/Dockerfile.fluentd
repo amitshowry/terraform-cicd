@@ -1,0 +1,15 @@
+ARG FLUENTD_VERSION=v1.16-debian-1
+FROM fluent/fluentd:${FLUENTD_VERSION}
+
+# All plugins used (tail, forward, record_transformer, http, file, stdout)
+# are built-in — no gem install needed.
+
+# Copy configuration
+COPY conf/fluent.conf /fluentd/etc/fluent.conf
+
+# Create buffer and position-file directories
+USER root
+RUN mkdir -p /var/log/fluentd-buffers /var/log/fluentd-failed /var/log/fluentd && \
+    chown -R fluent:fluent /var/log/fluentd-buffers /var/log/fluentd-failed /var/log/fluentd
+
+USER fluent

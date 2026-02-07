@@ -30,6 +30,13 @@ resource "docker_container" "artifactory" {
   image = docker_image.artifactory.image_id
   
   restart = "unless-stopped"
+
+  log_driver = "fluentd"
+  log_opts = {
+    "fluentd-address" = "localhost:24224"
+    "fluentd-async"   = "true"
+    "tag"             = "docker.artifactory"
+  }
  
   depends_on = [module.postgres]
 

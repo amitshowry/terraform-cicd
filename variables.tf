@@ -274,6 +274,101 @@ variable "zap_work_host_path" {
   default     = "/tmp/zap-work"
 }
 
+# Elasticsearch Configuration
+variable "elasticsearch_version" {
+  description = "Elasticsearch version"
+  type        = string
+  default     = "9.2.3"
+}
+
+variable "elasticsearch_http_port" {
+  description = "Elasticsearch HTTP port"
+  type        = number
+  default     = 9200
+}
+
+variable "elasticsearch_transport_port" {
+  description = "Elasticsearch transport port"
+  type        = number
+  default     = 9300
+}
+
+variable "elasticsearch_data_host_path" {
+  description = "Elasticsearch data volume local host path"
+  type        = string
+  default     = "/tmp/elasticsearch-data"
+}
+
+# Kibana Configuration
+variable "kibana_version" {
+  description = "Kibana version"
+  type        = string
+  default     = "9.2.3"
+}
+
+variable "kibana_http_port" {
+  description = "Kibana HTTP port"
+  type        = number
+  default     = 5601
+}
+
+variable "kibana_elasticsearch_host" {
+  description = "Elasticsearch hostname for Kibana"
+  type        = string
+  default     = "elasticsearch"
+}
+
+variable "kibana_elasticsearch_port" {
+  description = "Elasticsearch HTTP port for Kibana"
+  type        = number
+  default     = 9200
+}
+
+# Logstash Configuration
+variable "logstash_version" {
+  description = "Logstash version"
+  type        = string
+  default     = "9.1.9"
+}
+
+variable "logstash_beats_port" {
+  description = "Logstash Beats input port"
+  type        = number
+  default     = 5044
+}
+
+variable "logstash_http_port" {
+  description = "Logstash HTTP input port for Fluentd"
+  type        = number
+  default     = 8080
+}
+
+variable "logstash_monitoring_port" {
+  description = "Logstash monitoring API port"
+  type        = number
+  default     = 9600
+}
+
+# Fluentd Configuration
+variable "fluentd_version" {
+  description = "Fluentd version"
+  type        = string
+  default     = "v1.16-debian-1"
+}
+
+variable "fluentd_forward_port" {
+  description = "Fluentd forward input port"
+  type        = number
+  default     = 24224
+}
+
+# Caddy Configuration
+variable "caddy_version" {
+  description = "Caddy version"
+  type        = string
+  default     = "2.11-alpine"
+}
+
 variable "caddy_http_port" {
   description = "Caddy HTTP port"
   type        = number

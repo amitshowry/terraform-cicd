@@ -13,11 +13,16 @@ locals {
 }
 
 resource "docker_image" "caddy" {
-  name = "caddy:local"
+  name = "caddy:${var.image_version}-custom"
 
   build {
     context    = path.module
     dockerfile = "${path.module}/Dockerfile.caddy"
+    tag        = ["caddy:${var.image_version}-custom"]
+    
+    build_args = {
+      CADDY_VERSION = var.image_version
+    }
   }
 
   # Force rebuild when Caddyfile content changes

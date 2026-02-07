@@ -9,11 +9,11 @@ variable "host_ip" {
 }
 
 variable "image_version" {
-  description = "Caddy version"
+  description = "Fluentd version"
   type        = string
 }
 
-variable "http_port" {
-  description = "Caddy HTTP port"
+variable "forward_port" {
+  description = "Fluentd forward input port"
   type        = number
 }

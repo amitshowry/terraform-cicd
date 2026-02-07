@@ -33,6 +33,31 @@ output "zap_url" {
   value       = module.zap.url
 }
 
+output "elasticsearch_url" {
+  description = "Elasticsearch REST API URL"
+  value       = module.elasticsearch.url
+}
+
+output "kibana_url" {
+  description = "Kibana web interface URL"
+  value       = module.kibana.url
+}
+
+output "logstash_beats_url" {
+  description = "Logstash Beats input URL"
+  value       = module.logstash.beats_url
+}
+
+output "logstash_monitoring_url" {
+  description = "Logstash monitoring API URL"
+  value       = module.logstash.monitoring_url
+}
+
+output "fluentd_url" {
+  description = "Fluentd monitoring URL"
+  value       = module.fluentd.url
+}
+
 output "caddy_url" {
   description = "Caddy reverse proxy URL"
   value       = module.caddy.url
@@ -49,6 +74,10 @@ output "container_info" {
     artifactory = module.artifactory.container_info
     sonarqube = module.sonarqube.container_info
     zap = module.zap.container_info
+    elasticsearch = module.elasticsearch.container_info
+    kibana = module.kibana.container_info
+    logstash = module.logstash.container_info
+    fluentd = module.fluentd.container_info
     caddy = module.caddy.container_info
   }
 }

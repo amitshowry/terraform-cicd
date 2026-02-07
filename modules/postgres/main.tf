@@ -17,6 +17,13 @@ resource "docker_container" "postgres" {
   image = docker_image.postgres.image_id
   
   restart = "unless-stopped"
+
+  log_driver = "fluentd"
+  log_opts = {
+    "fluentd-address" = "localhost:24224"
+    "fluentd-async"   = "true"
+    "tag"             = "docker.${var.container_name}"
+  }
   
   networks_advanced {
     name = var.network_name

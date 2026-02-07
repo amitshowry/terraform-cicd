@@ -123,6 +123,69 @@ module "zap" {
 }
 
 ###########################################################
+# Elasticsearch
+###########################################################
+module "elasticsearch" {
+  source = "./modules/elasticsearch"
+
+  network_name = module.network.network_name
+  host_ip      = var.host_ip
+
+  image_version   = var.elasticsearch_version
+  http_port       = var.elasticsearch_http_port
+  transport_port  = var.elasticsearch_transport_port
+  data_host_path  = var.elasticsearch_data_host_path
+}
+
+###########################################################
+# Kibana
+###########################################################
+module "kibana" {
+  source = "./modules/kibana"
+
+  network_name = module.network.network_name
+  host_ip      = var.host_ip
+
+  image_version      = var.kibana_version
+  http_port          = var.kibana_http_port
+  elasticsearch_host = var.kibana_elasticsearch_host
+  elasticsearch_port = var.kibana_elasticsearch_port
+}
+
+###########################################################
+# Logstash
+###########################################################
+module "logstash" {
+  source = "./modules/logstash"
+
+  network_name = module.network.network_name
+  host_ip      = var.host_ip
+
+  image_version    = var.logstash_version
+  beats_port       = var.logstash_beats_port
+  http_port        = var.logstash_http_port
+  monitoring_port  = var.logstash_monitoring_port
+}
+
+###########################################################
+# Fluentd
+###########################################################
+module "fluentd" {
+  source = "./modules/fluentd"
+
+  network_name = module.network.network_name
+  host_ip      = var.host_ip
+
+  image_version = var.fluentd_version
+  forward_port  = var.fluentd_forward_port
+
+  depends_on = [
+    module.elasticsearch,
+    module.logstash
+  ]
+}
+
+###########################################################
 # Caddy Proxy
 ###########################################################
 module "caddy" {
@@ -130,10 +193,14 @@ module "caddy" {
 
   network_name = module.network.network_name
   host_ip      = var.host_ip
-  http_port    = var.caddy_http_port
+
+  image_version    = var.caddy_version
+  http_port        = var.caddy_http_port
 
   depends_on = [
     module.gitea,
-    module.jenkins
+    module.jenkins,
+    module.elasticsearch,
+    module.kibana
   ]
 }

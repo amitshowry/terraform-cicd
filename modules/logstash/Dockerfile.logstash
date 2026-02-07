@@ -1,0 +1,6 @@
+ARG LOGSTASH_VERSION=9.1.9
+FROM logstash:${LOGSTASH_VERSION}
+
+# Copy pipeline configuration into the standard location
+COPY pipeline/*.conf /usr/share/logstash/pipeline/
+

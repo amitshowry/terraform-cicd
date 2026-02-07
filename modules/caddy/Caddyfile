@@ -16,5 +16,19 @@ http://localhost {
     @jenkins path /jenkins* 
     reverse_proxy @jenkins jenkins:8080
 
+    # Elasticsearch under /elasticsearch
+    @elasticsearch path /elasticsearch*
+    route @elasticsearch {
+        uri strip_prefix /elasticsearch
+        reverse_proxy elasticsearch:9200
+    }
+
+    # Kibana under /kibana
+    @kibana path /kibana*
+    route @kibana {
+        uri strip_prefix /kibana
+        reverse_proxy kibana:5601
+    }
+
 }
 
